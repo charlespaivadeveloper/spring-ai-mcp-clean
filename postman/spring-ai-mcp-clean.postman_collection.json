@@ -1,0 +1,248 @@
+{
+  "info": {
+    "_postman_id": "spring-ai-mcp-clean-collection",
+    "name": "Spring AI MCP Clean Architecture",
+    "description": "API collection for the Spring AI MCP Clean Architecture project.\n\nPre-requisites:\n- KinD cluster running (./k8s/deploy-all.sh)\n- OPENAI_API_KEY set in the environment\n- All services healthy at their respective ports\n\nBase URLs:\n- Sample Client: http://localhost:8080\n- Person MCP: http://localhost:8060\n- Account MCP: http://localhost:8040",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "client_base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "person_mcp_url",
+      "value": "http://localhost:8060",
+      "type": "string"
+    },
+    {
+      "key": "account_mcp_url",
+      "value": "http://localhost:8040",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Checks",
+      "item": [
+        {
+          "name": "Sample Client Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{client_base_url}}/actuator/health",
+              "host": ["{{client_base_url}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Person MCP Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{person_mcp_url}}/actuator/health",
+              "host": ["{{person_mcp_url}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Account MCP Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{account_mcp_url}}/actuator/health",
+              "host": ["{{account_mcp_url}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Person Queries (AI-Powered)",
+      "item": [
+        {
+          "name": "Find persons by nationality - Germany",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has query and response fields', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('query');",
+                  "    pm.expect(json).to.have.property('response');",
+                  "    pm.expect(json.response).to.be.a('string');",
+                  "    pm.expect(json.response.length).to.be.greaterThan(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{client_base_url}}/api/v1/persons/nationality/Germany",
+              "host": ["{{client_base_url}}"],
+              "path": ["api", "v1", "persons", "nationality", "Germany"]
+            },
+            "description": "Uses AI + MCP to find all persons with German nationality"
+          },
+          "response": []
+        },
+        {
+          "name": "Find persons by nationality - Japan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{client_base_url}}/api/v1/persons/nationality/Japan",
+              "host": ["{{client_base_url}}"],
+              "path": ["api", "v1", "persons", "nationality", "Japan"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Count persons by nationality - France",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response contains a number', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.response).to.match(/\\d+/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{client_base_url}}/api/v1/persons/count-by-nationality/France",
+              "host": ["{{client_base_url}}"],
+              "path": ["api", "v1", "persons", "count-by-nationality", "France"]
+            },
+            "description": "Uses AI to count persons from France"
+          },
+          "response": []
+        },
+        {
+          "name": "Count by nationality from MCP server prompt - Russia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{client_base_url}}/api/v1/persons/count-by-nationality-from-server/Russia",
+              "host": ["{{client_base_url}}"],
+              "path": ["api", "v1", "persons", "count-by-nationality-from-server", "Russia"]
+            },
+            "description": "Uses a prompt loaded from the MCP server's prompt catalog"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Account Queries (AI-Powered)",
+      "item": [
+        {
+          "name": "Count accounts by person - Person 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response body is not empty', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.response.length).to.be.greaterThan(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{client_base_url}}/api/v1/accounts/count-by-person/1",
+              "host": ["{{client_base_url}}"],
+              "path": ["api", "v1", "accounts", "count-by-person", "1"]
+            },
+            "description": "Uses AI + Account MCP tool to count accounts for person with id=1"
+          },
+          "response": []
+        },
+        {
+          "name": "Total balance by person - Person 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response mentions balance', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.response.toLowerCase()).to.include('balance');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{client_base_url}}/api/v1/accounts/balance-by-person/1",
+              "host": ["{{client_base_url}}"],
+              "path": ["api", "v1", "accounts", "balance-by-person", "1"]
+            },
+            "description": "Uses AI to calculate total balance for person 1"
+          },
+          "response": []
+        },
+        {
+          "name": "Total balance by person - Person 5",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{client_base_url}}/api/v1/accounts/balance-by-person/5",
+              "host": ["{{client_base_url}}"],
+              "path": ["api", "v1", "accounts", "balance-by-person", "5"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

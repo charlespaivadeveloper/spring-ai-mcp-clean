@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: account-postgres-pvc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.account.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-postgres
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: account-postgres
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: account-postgres
+  template:
+    metadata:
+      labels:
+        app: account-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgresql.image }}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.account.db }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: account-db-username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secret
+                  key: account-db-password
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            {{- toYaml .Values.postgresql.account.resources | nindent 12 }}
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", {{ .Values.secrets.postgresql.accountUsername | quote }}, "-d", {{ .Values.postgresql.account.db | quote }}]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: account-postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: account-postgres-svc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: account-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

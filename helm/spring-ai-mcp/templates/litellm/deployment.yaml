@@ -1,0 +1,84 @@
+{{- if .Values.litellm.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    model_list:
+      - model_name: gpt-4o-mini
+        litellm_params:
+          model: ollama/{{ .Values.ollama.model }}
+          api_base: http://ollama-svc:{{ .Values.ollama.port }}
+    general_settings:
+      drop_params: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: litellm
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+        - name: litellm
+          image: {{ .Values.litellm.image }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--config"
+            - "/etc/litellm/config.yaml"
+            - "--port"
+            - {{ .Values.litellm.port | quote }}
+          ports:
+            - containerPort: {{ .Values.litellm.port }}
+          resources:
+            {{- toYaml .Values.litellm.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: {{ .Values.litellm.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/livenessProbe
+              port: {{ .Values.litellm.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          volumeMounts:
+            - name: litellm-config
+              mountPath: /etc/litellm
+      volumes:
+        - name: litellm-config
+          configMap:
+            name: litellm-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm-svc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: litellm
+  ports:
+    - port: {{ .Values.litellm.port }}
+      targetPort: {{ .Values.litellm.port }}
+{{- end }}

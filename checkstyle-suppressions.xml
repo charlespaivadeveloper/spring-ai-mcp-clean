@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Suppress MagicNumber in test classes -->
+    <suppress checks="MagicNumber" files=".*Test\.java"/>
+    <suppress checks="MagicNumber" files=".*IT\.java"/>
+
+    <!-- Suppress JavaDoc checks in test classes -->
+    <suppress checks="MissingJavadocMethod" files=".*Test\.java"/>
+    <suppress checks="MissingJavadocMethod" files=".*IT\.java"/>
+    <suppress checks="JavadocMethod" files=".*Test\.java"/>
+    <suppress checks="JavadocMethod" files=".*IT\.java"/>
+
+    <!-- Suppress HiddenField in Builder inner classes (Lombok generated) -->
+    <suppress checks="HiddenField" files=".*\.java"/>
+</suppressions>

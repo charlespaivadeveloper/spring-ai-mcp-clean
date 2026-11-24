@@ -1,0 +1,36 @@
+@startuml C4_Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title C4 Container Diagram — Spring AI MCP Clean Architecture
+
+Person(aiUser, "API User", "Sends REST queries")
+System_Ext(openAi, "OpenAI API", "GPT-4o-mini model")
+
+System_Boundary(sys, "Spring AI MCP System") {
+
+    Container(client, "Sample Client", "Spring Boot 4 / Java 21",
+        "REST API gateway. Builds prompts and routes AI calls via MCP tools.")
+
+    Container(personSvc, "Person MCP Service", "Spring Boot 4 / Spring AI 2 / Java 21",
+        "MCP server exposing Person domain tools (find by id, find by nationality). Clean Architecture.")
+
+    Container(accountSvc, "Account MCP Service", "Spring Boot 4 / Spring AI 2 / Java 21",
+        "MCP server exposing Account domain tools (find accounts by person id). Clean Architecture.")
+
+    ContainerDb(personDb, "Person Database", "PostgreSQL 16",
+        "Stores person data: id, name, age, nationality, gender.")
+
+    ContainerDb(accountDb, "Account Database", "PostgreSQL 16",
+        "Stores account data: id, number, balance, person_id.")
+}
+
+Rel(aiUser,    client,    "REST",     "HTTP/JSON")
+Rel(client,    openAi,    "Chat API", "HTTPS/JSON")
+Rel(client,    personSvc, "MCP/SSE",  "HTTP")
+Rel(client,    accountSvc,"MCP/SSE",  "HTTP")
+Rel(personSvc, personDb,  "JDBC",     "PostgreSQL protocol")
+Rel(accountSvc,accountDb, "JDBC",     "PostgreSQL protocol")
+
+@enduml

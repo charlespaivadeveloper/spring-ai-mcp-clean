@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-client
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: sample-client
+    version: {{ .Values.global.imageTag | quote }}
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-client
+  template:
+    metadata:
+      labels:
+        app: sample-client
+        version: {{ .Values.global.imageTag | quote }}
+    spec:
+      containers:
+        - name: sample-client
+          image: {{ .Values.global.imageRegistry }}/sample-client:{{ .Values.sampleClient.imageTag | default .Values.global.imageTag }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.sampleClient.port }}
+          env:
+            {{- if eq (.Values.sampleClient.aiProvider | default "openai") "gateway" }}
+            - name: OPENAI_API_KEY
+              value: "not-needed"
+            - name: OPENAI_BASE_URL
+              value: "http://litellm-svc:{{ .Values.litellm.port }}"
+            {{- else if eq (.Values.sampleClient.aiProvider | default "openai") "ollama" }}
+            - name: SPRING_PROFILES_ACTIVE
+              value: "ollama"
+            - name: OLLAMA_BASE_URL
+              value: {{ .Values.sampleClient.ollama.baseUrl | quote }}
+            - name: OLLAMA_MODEL
+              value: {{ .Values.sampleClient.ollama.model | default "llama3.1" | quote }}
+            {{- else }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: api-key
+            {{- end }}
+            - name: PERSON_MCP_URL
+              value: http://person-mcp-svc:{{ .Values.personMcpService.port }}
+            - name: ACCOUNT_MCP_URL
+              value: http://account-mcp-svc:{{ .Values.accountMcpService.port }}
+          resources:
+            {{- toYaml .Values.sampleClient.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.sampleClient.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .Values.sampleClient.port }}
+            initialDelaySeconds: 60
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-client-svc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector:
+    app: sample-client
+  ports:
+    - port: {{ .Values.sampleClient.port }}
+      targetPort: {{ .Values.sampleClient.port }}
+      nodePort: {{ .Values.sampleClient.nodePort }}

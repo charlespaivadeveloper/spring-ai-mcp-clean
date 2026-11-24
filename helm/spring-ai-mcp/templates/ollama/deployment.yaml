@@ -1,0 +1,76 @@
+{{- if .Values.ollama.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: ollama
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: {{ .Values.ollama.image }}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              ollama serve &
+              until ollama list > /dev/null 2>&1; do sleep 2; done
+              ollama pull {{ .Values.ollama.model }}
+              wait
+          ports:
+            - containerPort: {{ .Values.ollama.port }}
+          env:
+            - name: OLLAMA_HOST
+              value: "0.0.0.0"
+          resources:
+            {{- toYaml .Values.ollama.resources | nindent 12 }}
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - ollama list | grep -q {{ .Values.ollama.model | quote }}
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 40
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - ollama list > /dev/null 2>&1
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+      volumes:
+        - name: ollama-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-svc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: ollama
+  ports:
+    - port: {{ .Values.ollama.port }}
+      targetPort: {{ .Values.ollama.port }}
+{{- end }}

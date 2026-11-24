@@ -1,0 +1,21 @@
+spring:
+  flyway:
+    locations: classpath:db/migration
+    clean-disabled: false
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+
+  ai:
+    mcp:
+      server:
+        name: person-mcp-server-test
+        version: 1.0.0-test
+
+logging:
+  level:
+    com.example.springmcp: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

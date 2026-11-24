@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: sample-mcp-client
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: gpt-4o-mini
+    mcp:
+      client:
+        sse:
+          connections:
+            person-mcp-server:
+              url: ${PERSON_MCP_URL:http://localhost:8060}
+            account-mcp-server:
+              url: ${ACCOUNT_MCP_URL:http://localhost:8040}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.example.springmcp: DEBUG
+    org.springframework.ai: INFO

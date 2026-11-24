@@ -1,0 +1,3 @@
+# KinD (local) overrides — images loaded with: kind load docker-image
+global:
+  imagePullPolicy: Never

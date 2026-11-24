@@ -1,0 +1,15 @@
+spring:
+  flyway:
+    locations: classpath:db/migration
+    clean-disabled: false
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+
+  ai:
+    mcp:
+      server:
+        name: account-mcp-server-test
+        version: 1.0.0-test

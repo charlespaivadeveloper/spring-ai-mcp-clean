@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: account-mcp-service
+
+  ai:
+    mcp:
+      server:
+        name: account-mcp-server
+        version: 1.0.0
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/accountdb
+    username: ${DB_USERNAME:account_user}
+    password: ${DB_PASSWORD:account_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
+      minimum-idle: 5
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+server:
+  port: 8040
+
+logging:
+  level:
+    com.example.springmcp: DEBUG
+    org.springframework.ai: INFO

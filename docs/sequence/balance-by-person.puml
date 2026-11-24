@@ -1,0 +1,47 @@
+@startuml balance-by-person
+title Sequence: Total Balance by Person ID
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 10
+
+actor       "API User"              as user
+participant "AccountQueryController\n(REST Adapter)" as ctrl  #LightBlue
+participant "OpenAI GPT Model"      as ai              #LightYellow
+participant "AccountMcpAdapter\n(MCP Adapter)"       as mcp   #LightBlue
+participant "FindAccountsByPersonIdUseCase"           as uc    #LightGreen
+participant "AccountQueryService\n(App Service)"     as svc   #LightGreen
+participant "AccountRepositoryAdapter\n(Infra)"      as adapt #Pink
+database    "PostgreSQL\n(accounts)"                 as db
+
+user  -> ctrl  : GET /api/v1/accounts/balance-by-person/1
+activate ctrl
+
+ctrl  -> ai    : ChatClient.prompt("Total balance for person with id 1?")
+activate ai
+note right of ai: AI calls getAccountsByPersonId tool
+
+ai    -> mcp   : getAccountsByPersonId(1L)
+activate mcp
+mcp   -> uc    : findByPersonId(1L)
+activate uc
+uc    -> svc   : findByPersonId(1L)
+activate svc
+svc   -> adapt : findByPersonId(PersonId.of(1L))
+activate adapt
+adapt -> db    : SELECT * FROM accounts WHERE person_id = 1
+db   --> adapt : [AccountJpaEntity list]
+adapt -> adapt : mapper.toDomainList(entities)\nAccountResponseMapper.toResponseList(stream)
+adapt --> svc  : [AccountResponse list]
+deactivate adapt
+svc  --> uc    : [AccountResponse list]
+deactivate svc
+uc   --> mcp   : [AccountResponse list]
+deactivate uc
+mcp  --> ai    : tool result: 3 accounts, balances [1000, 500, 2000]
+deactivate mcp
+ai   --> ctrl  : "Person 1 has 3 accounts. Total balance: 3500. Accounts: 1234567890 (1000), 2345678901 (500), 3456789012 (2000)"
+deactivate ai
+ctrl --> user  : 200 OK AiQueryResponse
+deactivate ctrl
+
+@enduml

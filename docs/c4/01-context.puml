@@ -1,0 +1,21 @@
+@startuml C4_Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title C4 Context Diagram — Spring AI MCP Clean Architecture
+
+Person(aiUser, "AI Application User", "Developer or end-user querying the system via REST API")
+Person_Ext(aiModel, "OpenAI GPT Model", "External AI model (gpt-4o-mini) used to process natural language queries")
+
+System(sampleClient, "Sample MCP Client", "AI-powered REST gateway. Accepts natural language queries and delegates to AI with MCP tools.")
+
+System_Ext(personMcpServer, "Person MCP Server", "Provides MCP tools to query Person data from a PostgreSQL database.")
+System_Ext(accountMcpServer, "Account MCP Server", "Provides MCP tools to query Account data from a PostgreSQL database.")
+
+Rel(aiUser,       sampleClient,    "HTTP REST queries", "JSON over HTTPS")
+Rel(sampleClient, aiModel,         "Sends prompt + tools", "OpenAI API")
+Rel(aiModel,      personMcpServer, "Invokes MCP tools",  "MCP/SSE")
+Rel(aiModel,      accountMcpServer,"Invokes MCP tools",  "MCP/SSE")
+
+@enduml

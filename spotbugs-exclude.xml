@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+
+    <!-- Exclude Lombok-generated code patterns -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Method name="builder"/>
+    </Match>
+
+    <!-- Suppress false positives in JPA entities -->
+    <Match>
+        <Class name="~.*JpaEntity"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Suppress SE_BAD_FIELD for Spring-managed beans -->
+    <Match>
+        <Bug pattern="SE_BAD_FIELD"/>
+    </Match>
+
+    <!-- Suppress unread field warnings in Spring components -->
+    <Match>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+        <Class name="~.*Application"/>
+    </Match>
+
+    <!-- Suppress null pointer checks that Spring handles -->
+    <Match>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+        <Class name="~.*Adapter"/>
+    </Match>
+
+</FindBugsFilter>

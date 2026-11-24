@@ -1,0 +1,134 @@
+global:
+  imageRegistry: spring-ai-mcp
+  imageTag: "1.0.0"
+  imagePullPolicy: IfNotPresent
+
+kong:
+  enabled: false
+  proxy:
+    type: NodePort
+    http:
+      nodePort: 30000
+    tls:
+      enabled: false
+  admin:
+    enabled: true
+    type: NodePort
+    http:
+      enabled: true
+      nodePort: 30001
+  ingressController:
+    enabled: true
+    installCRDs: true
+  postgresql:
+    enabled: false
+  env:
+    database: "off"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  plugins:
+    rateLimiting:
+      minute: 60
+      hour: 1000
+    correlationId:
+      headerName: X-Correlation-ID
+
+postgresql:
+  image: postgres:16-alpine
+  person:
+    db: persondb
+    storage: 1Gi
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "250m"
+  account:
+    db: accountdb
+    storage: 1Gi
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "250m"
+
+secrets:
+  postgresql:
+    personUsername: person_user
+    personPassword: person_pass
+    accountUsername: account_user
+    accountPassword: account_pass
+  openai:
+    apiKey: ""
+
+personMcpService:
+  port: 8060
+  nodePort: 30060
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+accountMcpService:
+  port: 8040
+  nodePort: 30040
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+ollama:
+  enabled: false
+  image: ollama/ollama:latest
+  model: llama3.1
+  port: 11434
+  resources:
+    requests:
+      memory: "4Gi"
+      cpu: "1000m"
+    limits:
+      memory: "6Gi"
+      cpu: "2000m"
+
+litellm:
+  enabled: false
+  image: ghcr.io/berriai/litellm:main-latest
+  port: 4000
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+sampleClient:
+  port: 8080
+  nodePort: 30080
+  imageTag: ""  # overrides global.imageTag when set (e.g. "1.0.0-ollama")
+  aiProvider: openai  # "openai", "ollama" (host), or "gateway" (LiteLLM inside cluster)
+  ollama:
+    baseUrl: ""
+    model: "llama3.1"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"

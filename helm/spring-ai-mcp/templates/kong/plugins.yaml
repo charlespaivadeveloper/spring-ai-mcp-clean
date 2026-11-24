@@ -1,0 +1,42 @@
+{{- if .Values.kong.enabled }}
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: rate-limiting
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+plugin: rate-limiting
+config:
+  minute: {{ .Values.kong.plugins.rateLimiting.minute }}
+  hour: {{ .Values.kong.plugins.rateLimiting.hour }}
+  policy: local
+  error_message: "Rate limit exceeded. Try again later."
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: correlation-id
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+plugin: correlation-id
+config:
+  header_name: {{ .Values.kong.plugins.correlationId.headerName | quote }}
+  generator: uuid#counter
+  echo_downstream: true
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: prometheus
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spring-ai-mcp.labels" . | nindent 4 }}
+plugin: prometheus
+config:
+  status_code_metrics: true
+  latency_metrics: true
+  bandwidth_metrics: true
+  upstream_health_metrics: true
+{{- end }}

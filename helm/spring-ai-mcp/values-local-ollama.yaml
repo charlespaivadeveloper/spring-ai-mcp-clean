@@ -1,0 +1,14 @@
+# KinD (local) overrides — Ollama running on the host machine
+# Usage: ./deploy-local-ollama.sh [--ollama-model <model>]
+# Requires: Ollama running locally with a tool-calling model
+#   ollama pull llama3.1
+global:
+  imagePullPolicy: Never
+
+sampleClient:
+  imageTag: "1.0.0-ollama"
+  aiProvider: ollama
+  ollama:
+    # host.docker.internal resolves to the host on Docker Desktop (Windows/Mac)
+    baseUrl: "http://host.docker.internal:11434"
+    model: "llama3.1"

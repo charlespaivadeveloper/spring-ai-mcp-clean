@@ -1,0 +1,22 @@
+# KinD (local) overrides — Ollama + LiteLLM gateway running inside the cluster
+# Usage: ./deploy-local-gateway.sh [--ollama-model <model>]
+#
+# Memory requirements (Docker Desktop):
+#   llama3.1 (8B):   ~5 GB  — set Docker Desktop RAM >= 8 GB
+#   llama3.2 (3B):   ~2 GB  — set Docker Desktop RAM >= 5 GB
+#   qwen2.5:3b:      ~2 GB  — set Docker Desktop RAM >= 5 GB
+global:
+  imagePullPolicy: Never
+
+kong:
+  enabled: true
+
+ollama:
+  enabled: true
+  model: llama3.1
+
+litellm:
+  enabled: true
+
+sampleClient:
+  aiProvider: gateway

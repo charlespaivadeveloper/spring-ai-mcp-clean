@@ -1,0 +1,58 @@
+@startuml find-person-by-id
+title Sequence: Find Person by ID
+
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 10
+skinparam sequenceParticipant underline
+
+actor       "API User"            as user
+participant "PersonQueryController\n(REST Adapter)"  as ctrl   #LightBlue
+participant "OpenAI GPT Model"    as ai               #LightYellow
+participant "PersonMcpAdapter\n(MCP Adapter)"        as mcp    #LightBlue
+participant "FindPersonByIdUseCase\n(Port Interface)" as uc     #LightGreen
+participant "PersonQueryService\n(App Service)"      as svc    #LightGreen
+participant "PersonRepositoryPort\n(Domain Port)"    as port   #LightCoral
+participant "PersonRepositoryAdapter\n(Infra Adapter)"as adapt #Pink
+participant "PersonSpringDataRepository\n(Spring Data)" as repo #Pink
+database    "PostgreSQL"           as db
+
+user  -> ctrl  : GET /api/v1/persons/nationality/Germany
+activate ctrl
+
+ctrl  -> ai    : ChatClient.prompt("Find persons with Germany nationality")
+activate ai
+note right of ai: AI decides to call\ngetPersonsByNationality tool
+
+ai    -> mcp   : getPersonsByNationality("Germany")
+activate mcp
+mcp   -> uc    : findByNationality("Germany")
+activate uc
+uc    -> svc   : findByNationality("Germany")  [implements]
+activate svc
+svc   -> port  : findByNationality("Germany")
+activate port
+port  -> adapt : findByNationality(PersonId)  [implements]
+activate adapt
+adapt -> repo  : findByNationality("Germany")
+activate repo
+repo  -> db    : SELECT * FROM persons WHERE nationality = 'Germany'
+db   --> repo  : [PersonJpaEntity list]
+repo --> adapt : [PersonJpaEntity list]
+deactivate repo
+adapt -> adapt : mapper.toDomainList(entities)
+adapt --> port : [Person domain list]
+deactivate adapt
+deactivate port
+svc   -> svc   : PersonResponseMapper.toResponseList(persons)  [streams]
+svc  --> uc    : [PersonResponse list]
+deactivate svc
+uc   --> mcp   : [PersonResponse list]
+deactivate uc
+mcp  --> ai    : tool result JSON
+deactivate mcp
+ai   --> ctrl  : "Found 2 persons from Germany: Hans Müller (35, MALE), Daniel Schmidt (41, MALE)"
+deactivate ai
+ctrl --> user  : 200 OK AiQueryResponse
+deactivate ctrl
+
+@enduml

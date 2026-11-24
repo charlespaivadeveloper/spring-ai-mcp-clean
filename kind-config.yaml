@@ -1,0 +1,42 @@
+# KinD (Kubernetes in Docker) cluster configuration
+# Run: kind create cluster --config kind-config.yaml --name spring-ai-mcp
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: spring-ai-mcp
+
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # Sample client REST API
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+      # Person MCP server
+      - containerPort: 30060
+        hostPort: 8060
+        protocol: TCP
+      # Account MCP server
+      - containerPort: 30040
+        hostPort: 8040
+        protocol: TCP
+      # PostgreSQL person (optional debug access)
+      - containerPort: 30432
+        hostPort: 5432
+        protocol: TCP
+      # Kong API Gateway — HTTP proxy
+      - containerPort: 30000
+        hostPort: 8000
+        protocol: TCP
+      # Kong Admin API — debug/inspect routes
+      - containerPort: 30001
+        hostPort: 8001
+        protocol: TCP
+
+  - role: worker
+  - role: worker

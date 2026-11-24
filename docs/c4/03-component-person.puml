@@ -1,0 +1,69 @@
+@startuml C4_Component_Person
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title C4 Component Diagram — Person MCP Service (Clean Architecture)
+
+Container_Ext(mcpClient, "MCP Client", "Spring AI", "Invokes MCP tools")
+ContainerDb_Ext(postgres, "PostgreSQL", "DB", "Persons table")
+
+Container_Boundary(personSvc, "Person MCP Service") {
+
+    ' === Adapter Layer ===
+    Component(mcpAdapter, "PersonMcpAdapter", "Spring @Component",
+        "ADAPTER LAYER\nExposes @Tool methods for MCP protocol.\nDelegates to use case interfaces.")
+
+    ' === Application Layer ===
+    Component(findByIdUC, "FindPersonByIdUseCase", "Interface",
+        "APPLICATION LAYER\nInput port: find one person by ID.")
+
+    Component(findByNatUC, "FindPersonsByNationalityUseCase", "Interface",
+        "APPLICATION LAYER\nInput port: find persons by nationality.")
+
+    Component(queryService, "PersonQueryService", "Spring @Service",
+        "APPLICATION LAYER\nImplements both use cases.\nOrchestrates domain + repository port.")
+
+    Component(responseMapper, "PersonResponseMapper", "Utility",
+        "APPLICATION LAYER\nMaps Person domain aggregates to PersonResponse DTOs using streams.")
+
+    ' === Domain Layer ===
+    Component(person, "Person", "Domain Aggregate",
+        "DOMAIN LAYER\nAggregate root with business rules (create, reconstitute, isAdult, fullName).")
+
+    Component(personId, "PersonId", "Value Object (Record)",
+        "DOMAIN LAYER\nImmutable identifier with non-null invariant.")
+
+    Component(repoPort, "PersonRepositoryPort", "Interface",
+        "DOMAIN LAYER\nOutput port owned by domain. Defines persistence contract.")
+
+    ' === Infrastructure Layer ===
+    Component(repoAdapter, "PersonRepositoryAdapter", "Spring @Component",
+        "INFRASTRUCTURE LAYER\nAdapter implementing PersonRepositoryPort.\nUses Spring Data JPA.")
+
+    Component(jpaRepo, "PersonSpringDataRepository", "Spring Data JPA",
+        "INFRASTRUCTURE LAYER\nSpring Data repository for PersonJpaEntity.")
+
+    Component(jpaEntity, "PersonJpaEntity", "@Entity",
+        "INFRASTRUCTURE LAYER\nJPA entity mapping to persons table.")
+
+    Component(persistMapper, "PersonPersistenceMapper", "MapStruct @Mapper",
+        "INFRASTRUCTURE LAYER\nMaps between JPA entity and domain aggregate.")
+}
+
+Rel(mcpClient,    mcpAdapter,    "calls tool")
+Rel(mcpAdapter,   findByIdUC,    "uses")
+Rel(mcpAdapter,   findByNatUC,   "uses")
+Rel(queryService, findByIdUC,    "implements")
+Rel(queryService, findByNatUC,   "implements")
+Rel(queryService, repoPort,      "calls")
+Rel(queryService, responseMapper,"uses")
+Rel(responseMapper, person,      "reads")
+Rel(repoAdapter,  repoPort,      "implements")
+Rel(repoAdapter,  jpaRepo,       "uses")
+Rel(repoAdapter,  persistMapper, "uses")
+Rel(persistMapper,jpaEntity,     "maps")
+Rel(persistMapper,person,        "maps")
+Rel(jpaRepo,      postgres,      "SQL queries")
+
+@enduml
